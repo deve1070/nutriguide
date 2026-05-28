@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment: POSTGRES_USER:postgres
+      POSTGRES_PASSWORD:postgres
+      POSTGRES_DB:nutriguide
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/nutriguide
+      APP_ENV: development
+      DEBUG: "true"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./chroma_db:/app/chroma_db
+    depends_on:
+      - db
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+volumes:
+  postgres-data:

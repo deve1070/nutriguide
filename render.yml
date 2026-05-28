@@ -1,0 +1,49 @@
+services:
+  # ── Backend API ──────────────────────────────────────
+  - type: web
+    name: nutriguide-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nutriguide-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: WATSONX_URL
+        value: https://us-south.ml.cloud.ibm.com
+      - key: WATSONX_API_KEY
+        sync: false # set manually in Render dashboard
+      - key: WATSONX_PROJECT_ID
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://nutriguide.onrender.com
+
+  # ── Frontend ─────────────────────────────────────────
+  - type: web
+    name: nutriguide-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: nutriguide-api
+          type: web
+          property: host
+
+# ── Postgres database ─────────────────────────────────
+databases:
+  - name: nutriguide-db
+    databaseName: nutriguide
+    user: nutriguide
+    plan: free

@@ -72,7 +72,7 @@ Over **537 million adults** live with diabetes globally. Millions more manage hy
 - Python 3.11+
 - Node.js 18+
 - PostgreSQL 15+
-- IBM watsonx.ai API key
+- Groq API key
 
 ### 1. Clone and install
 

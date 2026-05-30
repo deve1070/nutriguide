@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nutride123
+      POSTGRES_DB: nutriguide
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nutriguide"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - "8002:8000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:nutride123@db:5432/nutriguide"
+      APP_ENV: development
+      DEBUG: "true"
+      SECRET_KEY: local-dev-secret
+      JWT_SECRET_KEY: local-dev-jwt-secret
+      GROQ_API_KEY: not-set-yet
+      GROQ_MODEL_ID: llama-3.1-70b-versatile
+      CORS_ORIGINS: http://localhost:5173
+      CHROMA_PERSIST_PATH: /app/chroma_db
+    volumes:
+      - ./backend:/app/backend
+      - chroma_data:/app/chroma_db
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  chroma_data:

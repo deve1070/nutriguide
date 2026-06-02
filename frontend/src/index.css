@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-cream text-warmGray-dark font-body;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-cream;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-warmGray rounded-full;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-terra/20 text-terra-dark;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(250, 246, 239, 0.72);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(196, 184, 168, 0.3);
+  }
+
+  .glass-dark {
+    background: rgba(45, 74, 34, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(143, 175, 126, 0.2);
+  }
+
+  .btn-primary {
+    @apply bg-terra text-cream font-body font-medium px-6 py-3 rounded-2xl
+           shadow-warm transition-all duration-200
+           hover:bg-terra-dark hover:shadow-glow hover:-translate-y-0.5
+           active:translate-y-0 active:shadow-warm
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+
+  .btn-ghost {
+    @apply border border-warmGray/40 text-warmGray-dark font-body font-medium px-6 py-3
+           rounded-2xl transition-all duration-200
+           hover:border-terra/40 hover:text-terra hover:bg-terra/5
+           disabled:opacity-50;
+  }
+
+  .input-field {
+    @apply w-full bg-white/60 border border-warmGray/30 rounded-2xl px-4 py-3
+           font-body text-warmGray-dark placeholder-warmGray/60
+           focus:outline-none focus:border-terra/50 focus:ring-2 focus:ring-terra/10
+           transition-all duration-200;
+  }
+
+  .card {
+    @apply glass rounded-3xl p-6 shadow-card transition-all duration-300
+           hover:shadow-warm hover:-translate-y-0.5;
+  }
+
+  .tag {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium;
+  }
+}
+
+/* Typing animation for chat */
+.typing-dot {
+  animation: bounce-dot 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Staggered fade-up for lists */
+.stagger > * {
+  opacity: 0;
+  animation: fade-up 0.5s ease forwards;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.19s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.26s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.33s;
+}

@@ -4,8 +4,6 @@ from pydantic import BaseModel, EmailStr, field_validator
 
 from backend.models.user import UserRole
 
-# ── Request schemas ───────────────────────────────────
-
 
 class RegisterRequest(BaseModel):
     email: EmailStr
@@ -32,9 +30,6 @@ class LoginRequest(BaseModel):
     password: str
 
 
-# ── Response schemas ──────────────────────────────────
-
-
 class UserResponse(BaseModel):
     model_config = {"from_attributes": True}
 
@@ -47,6 +42,12 @@ class UserResponse(BaseModel):
 
 
 class TokenResponse(BaseModel):
+    """
+    Only the access token is in the response body.
+    The refresh token is in an httpOnly cookie — never in JSON.
+    """
+
     access_token: str
     token_type: str = "bearer"
+    expires_in: int  # seconds until access token expires
     user: UserResponse

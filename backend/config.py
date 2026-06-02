@@ -18,12 +18,26 @@ class Settings(BaseSettings):
     secret_key: str = "change-me-in-production"
 
     # ── Database ─────────────────────────────────────
-    database_url: str = "postgresql://postgres:nutride123@localhost:5432/nutriguide"
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/nutriguide"
 
     # ── JWT ──────────────────────────────────────────
     jwt_secret_key: str = "change-me-too"
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 10080  # 7 days
+    jwt_expire_minutes: int = 30  # access token — short lived
+    jwt_refresh_expire_days: int = 30  # refresh token — long lived
+
+    # ── OAuth — Google ────────────────────────────────
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:8002/auth/google/callback"
+
+    # ── OAuth — Facebook ─────────────────────────────
+    facebook_client_id: str = ""
+    facebook_client_secret: str = ""
+    facebook_redirect_uri: str = "http://localhost:8002/auth/facebook/callback"
+
+    # ── Frontend URL ─────────────────────────────────
+    frontend_url: str = "http://localhost:5173"
 
     # ── Groq LLM ─────────────────────────────────────
     groq_api_key: str = ""

@@ -34,7 +34,7 @@ services:
       SECRET_KEY: local-dev-secret
       JWT_SECRET_KEY: local-dev-jwt-secret
       GROQ_API_KEY: ${GROQ_API_KEY:-}
-      GROQ_MODEL_ID: llama3-70b-8192
+      GROQ_MODEL_ID: llama-3.3-70b-versatile
       CORS_ORIGINS: http://localhost:5173
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}

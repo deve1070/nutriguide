@@ -25,16 +25,31 @@ class LLMClient:
         max_tokens: int = 512,
         temperature: float = 0.7,
     ) -> Optional[str]:
+        """Single-turn completion"""
+        return self.complete_with_history(
+            messages=[{"role": "user", "content": prompt}],
+            system=system,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
+    def complete_with_history(
+        self,
+        messages: list[dict],
+        system: str = "You are a helpful clinical nutrition assistant.",
+        max_tokens: int = 512,
+        temperature: float = 0.7,
+    ) -> Optional[str]:
         """
-        Send a prompt and return the response text.
-        Returns None on failure so callers can use fallback logic.
+        Multi-turn completion — pass full conversation history.
+        messages format: [{"role": "user"|"assistant", "content": "..."}]
         """
         try:
             response = self._client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system},
-                    {"role": "user", "content": prompt},
+                    *messages,
                 ],
                 max_tokens=max_tokens,
                 temperature=temperature,

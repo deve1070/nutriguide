@@ -2,12 +2,15 @@ import enum
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum, String
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database import Base
 
 if TYPE_CHECKING:
+    from backend.bot_user import BotUser
+
+    from backend.models.chat_message import ChatMessage
     from backend.models.health_profile import HealthProfile
 
 
@@ -15,6 +18,7 @@ class UserRole(str, enum.Enum):
     patient = "patient"
     clinician = "clinician"
     admin = "admin"
+
 
 
 class User(Base):
@@ -43,6 +47,12 @@ class User(Base):
     # Relationships
     health_profile: Mapped["HealthProfile"] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    bot_users: Mapped[list["BotUser"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    chat_messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

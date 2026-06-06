@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List
-from datetime import datetime
+from typing import List, Optional
 
+from pydantic import BaseModel, Field
+from datetime import datetime
 
 # ── Request schemas ───────────────────────────────────
 
@@ -37,6 +37,21 @@ class CompareRequest(BaseModel):
     query_b: str = Field(..., min_length=2, max_length=300)
 
 
+class ChatHistoryItem(BaseModel):
+    id: int
+    role: int
+    content: str
+    source: List[dict] = []
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ChatHistoryResponse(BaseModel):
+    messages: List[ChatHistoryItem]
+    total: int
+
+
 # ── Response schemas ──────────────────────────────────
 
 
@@ -64,6 +79,10 @@ class ChatResponse(BaseModel):
     sources: List[FoodResult]
     total_results_found: int
     filters_applied: FiltersApplied
+    condition_notes: List[str] = Field(
+        default=[],
+        description="Clinical notes explaining how conditions affected recommendations",
+    )
     personalized: bool = Field(
         description="True if the user had a health profile applied"
     )

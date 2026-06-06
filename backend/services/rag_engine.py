@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 
 from backend.core.vector_store import VectorStore
+from backend.services.condition_filter import ConditionFilter
 from backend.services.llm_client import LLMClient
 
 SYSTEM_PROMPT = """You are NutriGuide, a clinical nutrition assistant. You help people 
@@ -23,9 +24,15 @@ class RAGEngine:
     3. Generates a personalized response via Groq
     """
 
-    def __init__(self, vector_store: VectorStore, llm_client: LLMClient):
+    def __init__(
+        self,
+        vector_store: VectorStore,
+        llm_client: LLMClient,
+        condition_filter: ConditionFilter,
+    ):
         self.vector_store = vector_store
         self.llm = llm_client
+        self.condition_filter = condition_filter
 
     def chat(
         self,
@@ -36,6 +43,7 @@ class RAGEngine:
         preferred_cuisines: Optional[List[str]] = None,
         max_calories: Optional[int] = None,
         n_results: int = 5,
+        conversation_history: Optional[List[dict]] = None,
     ) -> Dict:
         """
         Main entry point — takes a user query + health context,
@@ -64,16 +72,33 @@ class RAGEngine:
         if allergies and search_results:
             search_results = self._filter_allergens(search_results, allergies)
 
-        # ── Step 3: Assemble context ──────────────────
+        # ── Step 3: Condition-aware re-ranking ────────
+        condition_notes: List[str] = []
+        if conditions and search_results:
+            search_results, condition_notes = self.condition_filter.rerank(
+                results=search_results,
+                conditions=conditions,
+                calorie_override=max_calories,
+            )
+
+        # ── Step 4: Assemble context ──────────────────
         context = self._build_context(search_results)
         health_context = self._build_health_context(
             conditions, dietary_restrictions, allergies
         )
 
-        # ── Step 4: Generate ─────────────────────────
+        # ── Step 5: Generate ─────────────────────────
         prompt = self._build_prompt(query, context, health_context)
-        ai_response = self.llm.complete(
-            prompt=prompt,
+
+        # Build messages with history for multi-turn memory
+        messages = []
+        if conversation_history:
+            # Keep last 10 exchanges (20 messages) to stay within token limits
+            messages.extend(conversation_history[-20:])
+        messages.append({"role": "user", "content": prompt})
+
+        ai_response = self.llm.complete_with_history(
+            messages=messages,
             system=SYSTEM_PROMPT,
             max_tokens=400,
             temperature=0.7,
@@ -86,6 +111,7 @@ class RAGEngine:
             "response": ai_response,
             "sources": search_results[:3],
             "total_results_found": len(search_results),
+            "condition_notes": condition_notes,
             "filters_applied": {
                 "cuisine": cuisine_filter,
                 "max_calories": max_calories,

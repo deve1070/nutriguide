@@ -9,6 +9,7 @@ import Chat from "./pages/Chat";
 import MealPlan from "./pages/MealPlan";
 import Dashboard from "./pages/Dashboard";
 import RiskScore from "./pages/RiskScore";
+import MealLog from "./pages/MealLog";
 import Layout from "./components/layout/Layout";
 import { useEffect } from "react";
 
@@ -67,9 +68,9 @@ export default function App() {
         <Route index element={<Navigate to="chat" replace />} />
         <Route path="onboarding" element={<Onboarding />} />
         <Route path="chat" element={<Chat />} />
+        <Route path="meal-log" element={<MealLog />} />
         <Route path="meal-plan" element={<MealPlan />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="risk-score" element={<RiskScore />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -12,7 +12,7 @@ import clsx from "clsx";
 
 const NAV = [
   { to: "/app/chat", icon: MessageCircle, label: "Ask NutriGuide" },
-  { to: "/app/risk-score", icon: ClipboardList, label: "Meal Risk Score" },
+  { to: "/app/meal-log", icon: ClipboardList, label: "Meal Risk Score" },
   { to: "/app/meal-plan", icon: CalendarDays, label: "Meal Planner" },
   { to: "/app/dashboard", icon: LayoutDashboard, label: "My Profile" },
 ];

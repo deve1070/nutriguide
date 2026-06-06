@@ -10,7 +10,7 @@ from backend.database import engine, Base
 import backend.models  # noqa: F401
 
 # Routers
-from backend.routers import auth, profile, recommendations, search, meal_plan, analytics, oauth
+from backend.routers import auth, profile, recommendations, search, meal_plan, analytics, oauth, meal_log
 
 settings = get_settings()
 
@@ -63,8 +63,7 @@ app.include_router(oauth.router)
 app.include_router(profile.router)
 app.include_router(recommendations.router)
 app.include_router(search.router)
-
-
+app.include_router(meal_log.router)
 app.include_router(meal_plan.router)
 app.include_router(analytics.router)
 

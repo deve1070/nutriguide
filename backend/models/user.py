@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from backend.models.chat_message import ChatMessage
     from backend.models.health_profile import HealthProfile
     from backend.models.meal_log import MealLog
+    from backend.models.meal_plan import MealPlan
 
 
 class UserRole(str, enum.Enum):
@@ -56,6 +57,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     meal_logs: Mapped[list["MealLog"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    meal_plans: Mapped[list["MealPlan"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 

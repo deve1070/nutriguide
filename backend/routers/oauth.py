@@ -85,7 +85,7 @@ def _build_redirect(user: User) -> RedirectResponse:
     refresh = create_refresh_token({"sub": str(user.id)})
 
     frontend_url = (
-        f"{settings.frontend_url}/app/chat"
+        f"{settings.frontend_url}/oauth/callback"
         f"?access_token={access}"
         f"&refresh_token={refresh}"
         f"&provider=oauth"

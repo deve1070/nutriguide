@@ -28,22 +28,36 @@ function TypingDots() {
 }
 
 function FoodCard({ food, index }) {
+  const isGenerated = food.is_generated;
+
   return (
     <div
-      className="glass rounded-2xl p-4 text-sm animate-slide-in"
+      className={`rounded-2xl p-4 text-sm animate-slide-in ${isGenerated ? "bg-amber/8 border border-amber/20" : "glass"}`}
       style={{ animationDelay: `${index * 0.08}s`, opacity: 0 }}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
-        <p className="font-display text-base text-forest leading-tight">
-          {food.food_name}
-        </p>
-        <span className="tag bg-sage/10 text-sage-dark shrink-0">
-          {Math.round(food.similarity_score * 100)}% match
-        </span>
+        <div className="flex items-center gap-2">
+          {isGenerated && (
+            <span className="tag bg-amber/20 text-amber-dark text-xs shrink-0">
+              ✨ Custom
+            </span>
+          )}
+          <p className="font-display text-base text-forest leading-tight">
+            {food.food_name}
+          </p>
+        </div>
+        {!isGenerated && (
+          <span className="tag bg-sage/10 text-sage-dark shrink-0">
+            {Math.round(food.similarity_score * 100)}% match
+          </span>
+        )}
       </div>
       <p className="text-warmGray text-xs leading-relaxed mb-3 line-clamp-2">
         {food.food_description}
       </p>
+      {isGenerated && food.why_safe && (
+        <p className="text-sage-dark text-xs italic mb-3">🩺 {food.why_safe}</p>
+      )}
       <div className="flex flex-wrap gap-1.5">
         <span className="tag bg-terra/8 text-terra">{food.cuisine_type}</span>
         <span className="tag bg-amber/10 text-amber-dark">

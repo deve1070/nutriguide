@@ -1,7 +1,7 @@
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
-from datetime import datetime
 
 # ── Request schemas ───────────────────────────────────
 
@@ -37,11 +37,14 @@ class CompareRequest(BaseModel):
     query_b: str = Field(..., min_length=2, max_length=300)
 
 
+# ── History schemas ───────────────────────────────────
+
+
 class ChatHistoryItem(BaseModel):
     id: int
     role: str
     content: str
-    source: List[dict] = []
+    sources: List[dict] = []
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -66,6 +69,8 @@ class FoodResult(BaseModel):
     cooking_method: str
     taste_profile: str
     similarity_score: float
+    is_generated: bool = False  # True = AI-generated combination, not from DB
+    why_safe: str = ""  # clinical reason this is safe (generated only)
 
 
 class FiltersApplied(BaseModel):
@@ -79,12 +84,11 @@ class ChatResponse(BaseModel):
     sources: List[FoodResult]
     total_results_found: int
     filters_applied: FiltersApplied
-    condition_notes: List[str] = Field(
-        default=[],
-        description="Clinical notes explaining how conditions affected recommendations",
-    )
-    personalized: bool = Field(
-        description="True if the user had a health profile applied"
+    condition_notes: List[str] = Field(default=[])
+    personalized: bool = Field(description="True if health profile was applied")
+    has_generated_combination: bool = Field(
+        default=False,
+        description="True if at least one result is an AI-generated combination",
     )
 
 

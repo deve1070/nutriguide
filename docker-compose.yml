@@ -27,13 +27,14 @@ services:
     ports:
       - "8002:8000"
     environment:
+      PYTHONUNBUFFERED: "1"
       DATABASE_URL: "postgresql://postgres:nutride123@db:5432/nutriguide"
       APP_ENV: development
       DEBUG: "true"
       SECRET_KEY: local-dev-secret
       JWT_SECRET_KEY: local-dev-jwt-secret
-      GROQ_API_KEY: not-set-yet
-      GROQ_MODEL_ID: llama-3.1-70b-versatile
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL_ID: llama3-70b-8192
       CORS_ORIGINS: http://localhost:5173
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}

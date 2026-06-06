@@ -41,7 +41,7 @@ class Settings(BaseSettings):
 
     # ── Groq LLM ─────────────────────────────────────
     groq_api_key: str = ""
-    groq_model_id: str = "llama-3.1-70b-versatile"
+    groq_model_id: str = "llama3-70b-8192"
 
     # ── CORS ─────────────────────────────────────────
     cors_origins: str = "http://localhost:3000,http://localhost:5173"

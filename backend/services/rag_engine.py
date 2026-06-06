@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 
 from backend.core.vector_store import VectorStore
+from backend.services.combination_generator import CombinationGenerator
 from backend.services.condition_filter import ConditionFilter
 from backend.services.llm_client import LLMClient
 
@@ -29,10 +30,12 @@ class RAGEngine:
         vector_store: VectorStore,
         llm_client: LLMClient,
         condition_filter: ConditionFilter,
+        combination_generator: Optional[CombinationGenerator] = None,
     ):
         self.vector_store = vector_store
         self.llm = llm_client
         self.condition_filter = condition_filter
+        self.combination_generator = combination_generator
 
     def chat(
         self,
@@ -81,6 +84,28 @@ class RAGEngine:
                 calorie_override=max_calories,
             )
 
+        # ── Step 3b: Generate combination if results are poor ─
+        generated_combination = None
+        if (
+            self.combination_generator
+            and conditions
+            and self.combination_generator.should_trigger(search_results, conditions)
+        ):
+            generated_combination = self.combination_generator.generate(
+                query=query,
+                conditions=conditions,
+                dietary_restrictions=dietary_restrictions or [],
+                allergies=allergies or [],
+                preferred_cuisines=preferred_cuisines or [],
+                max_calories=max_calories,
+            )
+            if generated_combination:
+                # Prepend the generated combination as the top result
+                search_results = [generated_combination] + search_results[:2]
+                condition_notes = generated_combination.get(
+                    "condition_notes", condition_notes
+                )
+
         # ── Step 4: Assemble context ──────────────────
         context = self._build_context(search_results)
         health_context = self._build_health_context(
@@ -112,6 +137,7 @@ class RAGEngine:
             "sources": search_results[:3],
             "total_results_found": len(search_results),
             "condition_notes": condition_notes,
+            "has_generated_combination": generated_combination is not None,
             "filters_applied": {
                 "cuisine": cuisine_filter,
                 "max_calories": max_calories,

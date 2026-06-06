@@ -17,6 +17,10 @@ from backend.schemas.recommendation import (
     CompareRequest,
     CompareResponse,
 )
+from backend.services.combination_generator import (
+    CombinationGenerator,
+    get_combination_generator,
+)
 from backend.services.condition_filter import ConditionFilter, get_condition_filter
 from backend.services.llm_client import LLMClient, get_llm_client
 from backend.services.rag_engine import RAGEngine
@@ -31,11 +35,13 @@ def get_rag_engine(
     vector_store: VectorStore = Depends(get_vector_store),
     llm_client: LLMClient = Depends(get_llm_client),
     condition_filter: ConditionFilter = Depends(get_condition_filter),
+    combination_generator: CombinationGenerator = Depends(get_combination_generator),
 ) -> RAGEngine:
     return RAGEngine(
         vector_store=vector_store,
         llm_client=llm_client,
         condition_filter=condition_filter,
+        combination_generator=combination_generator,
     )
 
 
@@ -148,6 +154,7 @@ def chat(
         filters_applied=result["filters_applied"],
         condition_notes=result.get("condition_notes", []),
         personalized=bool(conditions or dietary_restrictions or allergies),
+        has_generated_combination=result.get("has_generated_combination", False),
     )
 
 

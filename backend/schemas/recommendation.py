@@ -39,7 +39,7 @@ class CompareRequest(BaseModel):
 
 class ChatHistoryItem(BaseModel):
     id: int
-    role: int
+    role: str
     content: str
     source: List[dict] = []
     created_at: datetime

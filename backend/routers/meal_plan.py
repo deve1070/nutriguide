@@ -140,7 +140,18 @@ def get_current_plan(
 ):
     meal_plan = planner.get_current_plan(user_id=current_user.id, db=db)
     if not meal_plan:
-        raise HTTPException(status_code=404, detail="No meal plan found. Generate one first.")
+        # Return empty response instead of 404
+        return MealPlanResponse(
+            plan_id="",
+            days=[],
+            summary=MealPlanSummary(
+                total_days=0,
+                avg_daily_calories=0,
+                cuisines_included=[],
+                conditions_applied=[],
+                generation_notes="No meal plan found. Generate one first.",
+            ),
+        )
 
     raw = meal_plan.plan_data
 

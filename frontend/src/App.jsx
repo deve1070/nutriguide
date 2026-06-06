@@ -8,6 +8,7 @@ import Onboarding from "./pages/Onboarding";
 import Chat from "./pages/Chat";
 import MealPlan from "./pages/MealPlan";
 import Dashboard from "./pages/Dashboard";
+import RiskScore from "./pages/RiskScore";
 import Layout from "./components/layout/Layout";
 import { useEffect } from "react";
 
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="chat" element={<Chat />} />
         <Route path="meal-plan" element={<MealPlan />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="risk-score" element={<RiskScore />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

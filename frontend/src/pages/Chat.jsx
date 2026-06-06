@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { recommendApi } from "../lib/api";
-import { Send, Salad, User, Sparkles, ChevronDown } from "lucide-react";
+import { Send, Salad, User, Sparkles, Trash2 } from "lucide-react";
 import clsx from "clsx";
 
 const BG =
@@ -28,22 +28,36 @@ function TypingDots() {
 }
 
 function FoodCard({ food, index }) {
+  const isGenerated = food.is_generated;
+
   return (
     <div
-      className="glass rounded-2xl p-4 text-sm animate-slide-in"
+      className={`rounded-2xl p-4 text-sm animate-slide-in ${isGenerated ? "bg-amber/8 border border-amber/20" : "glass"}`}
       style={{ animationDelay: `${index * 0.08}s`, opacity: 0 }}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
-        <p className="font-display text-base text-forest leading-tight">
-          {food.food_name}
-        </p>
-        <span className="tag bg-sage/10 text-sage-dark shrink-0">
-          {Math.round(food.similarity_score * 100)}% match
-        </span>
+        <div className="flex items-center gap-2">
+          {isGenerated && (
+            <span className="tag bg-amber/20 text-amber-dark text-xs shrink-0">
+              ✨ Custom
+            </span>
+          )}
+          <p className="font-display text-base text-forest leading-tight">
+            {food.food_name}
+          </p>
+        </div>
+        {!isGenerated && (
+          <span className="tag bg-sage/10 text-sage-dark shrink-0">
+            {Math.round(food.similarity_score * 100)}% match
+          </span>
+        )}
       </div>
       <p className="text-warmGray text-xs leading-relaxed mb-3 line-clamp-2">
         {food.food_description}
       </p>
+      {isGenerated && food.why_safe && (
+        <p className="text-sage-dark text-xs italic mb-3">🩺 {food.why_safe}</p>
+      )}
       <div className="flex flex-wrap gap-1.5">
         <span className="tag bg-terra/8 text-terra">{food.cuisine_type}</span>
         <span className="tag bg-amber/10 text-amber-dark">
@@ -68,7 +82,6 @@ function Message({ msg }) {
         isBot ? "items-start" : "items-start flex-row-reverse",
       )}
     >
-      {/* Avatar */}
       <div
         className={clsx(
           "w-8 h-8 rounded-full shrink-0 flex items-center justify-center",
@@ -85,7 +98,6 @@ function Message({ msg }) {
       <div
         className={clsx("max-w-xl flex flex-col gap-3", !isBot && "items-end")}
       >
-        {/* Bubble */}
         <div
           className={clsx(
             "px-5 py-4 rounded-3xl text-sm leading-relaxed",
@@ -97,7 +109,6 @@ function Message({ msg }) {
           {msg.content}
         </div>
 
-        {/* Condition notes */}
         {isBot && msg.condition_notes?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {msg.condition_notes.map((note, i) => (
@@ -108,11 +119,10 @@ function Message({ msg }) {
           </div>
         )}
 
-        {/* Food source cards */}
         {isBot && msg.sources?.length > 0 && (
           <div className="grid gap-2 w-full">
             {msg.sources.map((food, i) => (
-              <FoodCard key={food.food_id} food={food} index={i} />
+              <FoodCard key={food.food_id || i} food={food} index={i} />
             ))}
           </div>
         )}
@@ -122,18 +132,51 @@ function Message({ msg }) {
 }
 
 export default function Chat() {
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hello! 🌿 I'm NutriGuide. Tell me what you're in the mood for, or describe what your body needs right now — I'll find the best food options for you.",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [error, setError] = useState("");
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+
+  // ── Load conversation history on mount ─────────────
+  useEffect(() => {
+    recommendApi
+      .history({ limit: 100 })
+      .then((data) => {
+        if (data.messages && data.messages.length > 0) {
+          // Convert DB messages to display format
+          const loaded = data.messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+            sources: m.sources || [],
+            condition_notes: [],
+          }));
+          setMessages(loaded);
+        } else {
+          // No history — show welcome message
+          setMessages([
+            {
+              role: "assistant",
+              content:
+                "Hello! 🌿 I'm NutriGuide. Tell me what you're in the mood for, or describe what your body needs right now — I'll find the best food options for you.",
+            },
+          ]);
+        }
+      })
+      .catch(() => {
+        // On error, show welcome message
+        setMessages([
+          {
+            role: "assistant",
+            content:
+              "Hello! 🌿 I'm NutriGuide. Tell me what you're in the mood for, and I'll find the best food options for you.",
+          },
+        ]);
+      })
+      .finally(() => setHistoryLoading(false));
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -176,6 +219,19 @@ export default function Chat() {
     }
   };
 
+  const clearHistory = async () => {
+    if (!confirm("Clear all conversation history?")) return;
+    try {
+      await recommendApi.clearHistory();
+      setMessages([
+        {
+          role: "assistant",
+          content: "History cleared! 🌿 What can I help you find today?",
+        },
+      ]);
+    } catch {}
+  };
+
   const handleKey = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -183,53 +239,82 @@ export default function Chat() {
     }
   };
 
-  const isFirstMessage = messages.length === 1;
+  const isFirstMessage =
+    messages.length === 1 &&
+    messages[0]?.role === "assistant" &&
+    !messages[0]?.sources?.length;
 
   return (
     <div className="h-full flex flex-col relative">
-      {/* Background food image — subtle */}
       <div className="absolute inset-0 pointer-events-none">
         <img src={BG} alt="" className="w-full h-full object-cover opacity-5" />
       </div>
 
       {/* Header */}
-      <div className="relative glass border-b border-warmGray/20 px-8 py-5 flex items-center gap-3">
-        <div className="w-9 h-9 bg-terra/10 rounded-xl flex items-center justify-center">
-          <Sparkles size={18} className="text-terra" />
+      <div className="relative glass border-b border-warmGray/20 px-8 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-terra/10 rounded-xl flex items-center justify-center">
+            <Sparkles size={18} className="text-terra" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl text-forest">Ask NutriGuide</h1>
+            <p className="text-xs text-warmGray">
+              Powered by Llama 3.1 · Remembers your conversation
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="font-display text-xl text-forest">Ask NutriGuide</h1>
-          <p className="text-xs text-warmGray">
-            Powered by Llama 3.1 · Personalised to your health profile
-          </p>
-        </div>
+
+        {messages.length > 1 && (
+          <button
+            onClick={clearHistory}
+            className="flex items-center gap-1.5 text-xs text-warmGray hover:text-terra transition-colors px-3 py-1.5 rounded-xl hover:bg-terra/8"
+          >
+            <Trash2 size={14} /> Clear history
+          </button>
+        )}
       </div>
 
       {/* Messages */}
       <div className="relative flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-6">
-        {/* Suggestion chips — only on first message */}
-        {isFirstMessage && (
-          <div className="animate-fade-up">
-            <p className="text-xs text-warmGray uppercase tracking-widest mb-3">
-              Try asking
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => send(s)}
-                  className="text-sm glass px-4 py-2.5 rounded-2xl text-warmGray-dark hover:text-terra hover:border-terra/30 transition-all"
-                >
-                  {s}
-                </button>
+        {historyLoading ? (
+          <div className="flex justify-center pt-10">
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-terra/30 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
               ))}
             </div>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Suggestion chips — only show when no real history */}
+            {isFirstMessage && (
+              <div className="animate-fade-up">
+                <p className="text-xs text-warmGray uppercase tracking-widest mb-3">
+                  Try asking
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => send(s)}
+                      className="text-sm glass px-4 py-2.5 rounded-2xl text-warmGray-dark hover:text-terra hover:border-terra/30 transition-all"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {messages.map((msg, i) => (
-          <Message key={i} msg={msg} />
-        ))}
+            {messages.map((msg, i) => (
+              <Message key={i} msg={msg} />
+            ))}
+          </>
+        )}
 
         {loading && (
           <div className="flex gap-3 items-start animate-fade-in">
@@ -256,7 +341,6 @@ export default function Chat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
-            style={{ height: "auto" }}
             onInput={(e) => {
               e.target.style.height = "auto";
               e.target.style.height = e.target.scrollHeight + "px";

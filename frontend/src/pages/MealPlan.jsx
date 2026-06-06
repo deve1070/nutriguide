@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { mealPlanApi } from "../lib/api";
 import {
   Calendar,
@@ -7,6 +7,7 @@ import {
   ChevronUp,
   Flame,
   Utensils,
+  RefreshCw,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -52,22 +53,22 @@ function MealCard({ meal }) {
   );
 }
 
-function DayCard({ day, defaultOpen }) {
+function DayCard({ day, defaultOpen, isCurrentDay }) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="card overflow-hidden">
+    <div className={`card overflow-hidden ${isCurrentDay ? "ring-2 ring-terra/30" : ""}`}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between gap-4"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-terra/10 rounded-xl flex items-center justify-center">
-            <Calendar size={18} className="text-terra" />
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isCurrentDay ? "bg-terra text-cream" : "bg-terra/10"}`}>
+            <Calendar size={18} className={isCurrentDay ? "text-cream" : "text-terra"} />
           </div>
           <div className="text-left">
             <p className="font-display text-lg text-forest leading-tight">
-              {day.day_name}
+              {day.day_name} {isCurrentDay && <span className="text-xs text-terra ml-2">(Today)</span>}
             </p>
             <p className="text-xs text-warmGray">
               Day {day.day} · {day.total_calories} cal
@@ -104,6 +105,30 @@ export default function MealPlan() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [config, setConfig] = useState({ days: 7, meals_per_day: 3 });
+  const [currentDayName, setCurrentDayName] = useState("");
+
+  // Get current day name
+  useEffect(() => {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const today = days[new Date().getDay()];
+    setCurrentDayName(today);
+  }, []);
+
+  // Load current plan on mount
+  useEffect(() => {
+    const loadCurrentPlan = async () => {
+      try {
+        const data = await mealPlanApi.getCurrent();
+        setPlan(data);
+      } catch (e) {
+        // No plan exists yet, that's okay
+        if (e.response?.status !== 404) {
+          console.error("Failed to load current plan:", e);
+        }
+      }
+    };
+    loadCurrentPlan();
+  }, []);
 
   const generate = async () => {
     setLoading(true);
@@ -210,29 +235,45 @@ export default function MealPlan() {
           <div className="animate-fade-up">
             {/* Summary */}
             <div className="card mb-6 bg-forest/5">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-terra rounded-xl flex items-center justify-center shrink-0">
-                  <Utensils size={18} className="text-cream" />
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-terra rounded-xl flex items-center justify-center shrink-0">
+                    <Utensils size={18} className="text-cream" />
+                  </div>
+                  <div>
+                    <p className="font-display text-lg text-forest mb-1">
+                      Your {plan.summary.total_days}-Day Plan
+                    </p>
+                    <p className="text-xs text-warmGray mb-3">
+                      Avg {plan.summary.avg_daily_calories} cal/day ·{" "}
+                      {plan.summary.cuisines_included.slice(0, 3).join(", ")}
+                    </p>
+                    <p className="text-sm text-warmGray-dark leading-relaxed italic">
+                      {plan.summary.generation_notes}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-display text-lg text-forest mb-1">
-                    Your {plan.summary.total_days}-Day Plan
-                  </p>
-                  <p className="text-xs text-warmGray mb-3">
-                    Avg {plan.summary.avg_daily_calories} cal/day ·{" "}
-                    {plan.summary.cuisines_included.slice(0, 3).join(", ")}
-                  </p>
-                  <p className="text-sm text-warmGray-dark leading-relaxed italic">
-                    {plan.summary.generation_notes}
-                  </p>
-                </div>
+                <button
+                  onClick={generate}
+                  disabled={loading}
+                  className="btn-secondary flex items-center gap-2 shrink-0"
+                  title="Regenerate plan (replaces current)"
+                >
+                  <RefreshCw size={16} />
+                  Regenerate
+                </button>
               </div>
             </div>
 
             {/* Day cards */}
             <div className="flex flex-col gap-4 stagger">
               {plan.days.map((day, i) => (
-                <DayCard key={day.day} day={day} defaultOpen={i === 0} />
+                <DayCard
+                  key={day.day}
+                  day={day}
+                  defaultOpen={day.day_name === currentDayName}
+                  isCurrentDay={day.day_name === currentDayName}
+                />
               ))}
             </div>
           </div>
